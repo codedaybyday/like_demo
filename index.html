@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>点赞</title>
+	<style type="text/css">
+		#heart-move{
+			position: relative;
+		}
+		.out-circle{
+			height:34px;
+			width:34px;
+			border-radius: 50%;
+			background: #fff;
+			transform: scale(0);
+			position: absolute;
+		}
+		.inner-circle{
+			height:34px;
+			width:34px;
+			border-radius: 50%;
+			background: transparent;
+			transform: scale(0.5);
+			position: absolute;
+		}
+		.out-cirlce-move{
+			animation: outCircleAnimation 331ms;
+		}
+		@keyframes outCircleAnimation{
+			0%{
+				transform: scale(0);
+			}
+			100%{
+				transform: scale(1);
+			}
+		}
+		canvas{
+			background: blue;
+		}
+	</style>
+	<script type="text/javascript">
+		window.onload = function(){
+			var canvas = document.getElementsByTagName('canvas')[0];
+			const WIDTH = 640,HEIGHT=480,X = 100,Y = 100,IMG_SRC = './img/like.png';
+			var out_time = 333;
+			var inner_time = 310;
+			var heart_time = 105;
+			var star_time = 300;
+			var ctx = canvas.getContext('2d');
+			//var r = 0.5;
+			//drawCircle(100,100,34,'#fff');
+			move(out_time+inner_time+heart_time*2+star_time,function(){
+				ctx.clearRect(0,0,WIDTH,HEIGHT);
+			});
+			//drawHeartFromImg(0.5);
+			//heartImgMove(500);
+			function heartImgMove(t){
+				var start = (new Date).getTime();
+				var timer = setInterval(function(){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					var now = (new Date).getTime();
+					var rate = (now - start)/t;
+					rate = Math.min(rate,1);
+					drawHeartFromImg(0.5+0.44*rate);
+					if(rate == 1){
+						clearInterval(timer);
+					}
+				},16);
+			}
+			function move(t,cb){
+				var start = (new Date()).getTime();
+				var timer = setInterval(function(){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					var now = (new Date()).getTime();
+					var diff = now - start;
+					//画外圆
+					var out_rate = (diff)/out_time;
+					if(out_rate>=0){
+						out_rate = Math.min(out_rate,1);
+						drawOutCircle(X,Y,34*out_rate,'#fff'); 
+					}else{
+						drawOutCircle(X,Y,34,'#fff');
+					}
+					//画内圆
+					var inner_rate = (diff - out_time)/inner_time;
+					if(inner_rate > 0){
+						inner_rate = Math.min(inner_rate,0.9);
+						ctx.save();
+						ctx.beginPath();
+						//ctx.strokeStyle = 'red';
+						ctx.fillStyle = '#fff';
+						var smallR = 22+(84-22)*inner_rate,
+						bigR = smallR+16*(0.85-inner_rate);
+						ctx.arc(X,Y,bigR,0,Math.PI*2);
+						ctx.fill();
+						ctx.restore();
+						ctx.beginPath();
+						ctx.save();
+						ctx.globalCompositeOperation = 'destination-out';
+						ctx.arc(X,Y,smallR,0,Math.PI*2);
+						ctx.fill();
+						ctx.restore();
+					}
+					//心放大
+					var heart_rate = (diff - out_time)/heart_time;
+					if( heart_rate >= 0){
+						heart_rate = Math.min(heart_rate,2);
+						if(heart_rate >=0 && heart_rate <=1){
+							drawHeartFromImg(heart_rate*0.8);
+						}else if(heart_rate >1 && heart_rate <=2){
+							drawHeartFromImg(0.8-(heart_rate-1)*0.44);
+						}
+					}
+					//心缩小
+					/*var heart_rate2 = (diff - out_time - inner_time - heart_time)/heart_time;
+					if( heart_rate2 >= 0){
+						heart_rate2 = Math.min(heart_rate2,1);
+						console.log('scale',0.8-heart_rate2*0.2)
+						drawHeartFromImg(0.8-heart_rate2*0.2);
+					}*/
+					//星星发散
+					var star_rate = (diff - out_time - inner_time - heart_time)/star_time;
+					if(star_rate <=1 && star_rate >=0){
+						star_rate = Math.min(star_rate,1);
+						drawStar(star_rate);
+					}
+					if(diff >= t){
+						clearInterval(timer);
+						cb && cb();
+					}
+				},16);
+			}
+			function drawHeartFromImg(rate){
+				ctx.beginPath();
+				var w = 42*rate,h = 42*rate;
+				var img = new Image();
+				img.src = IMG_SRC;
+				img.onload = function(){
+					ctx.drawImage(img,0,0,42,42,X-w/2,Y-h/2,w,h);
+				};
+			}
+			function drawOutCircle(x,y,r,color){
+				ctx.save();
+				ctx.beginPath();
+				ctx.arc(x,y,r,0,Math.PI*2);
+				ctx.fillStyle = color;
+				ctx.fill();
+				ctx.restore();
+			}
+			/*outCirlcrMove(100,100,34,333,function(){
+				heartMove(1.44,105,function(){
+					//heartMove(0,105);
+				});
+				innerCircleMove(100,100,34,310);
+			})*/
+			//drawCircle(100,100,34,'#fff');
+			//drawInnerCircle(100,100,22);
+			//drawHeart();
+			
+			function outCirlcrMove(x,y,r,t,cb){
+				var start = (new Date()).getTime();
+				console.log(start);
+				var timer = setInterval(function(){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					var now = (new Date()).getTime();
+					var rate = (now - start)/t;
+					rate = Math.min(rate,1);
+					drawCircle(x,y,r*rate,'#fff');
+					if(rate == 1){
+						clearInterval(timer);
+						cb && cb();
+					} 
+				},16);
+			}
+			function drawInnerCircle(x,y,r){
+				ctx.save();
+				ctx.beginPath();
+				ctx.globalCompositeOperation = 'destination-out';
+				ctx.arc(x,y,r,0,Math.PI*2);
+				ctx.fill();
+				ctx.restore();
+			}
+			function innerCircleMove(x,y,r,t){
+				drawCircle(X,Y,22,'#fff');
+				var start = (new Date()).getTime();
+				var timer = setInterval(function(){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					drawCircle(X,Y,34,'#fff');
+					var now = (new Date()).getTime();
+					var rate = (now - start)/t;
+					rate = Math.min(rate,1);
+					drawInnerCircle(x,y,22+(35-22)*rate);
+					console.log('inner move',rate);
+					if(rate == 1){
+						clearInterval(timer);
+					}
+				},16);
+			}
+			function heartMove(scale,t,cb){
+				var start = (new Date()).getTime();
+				var timer = setInterval(function(){
+					ctx.clearRect(0,0,WIDTH,HEIGHT);
+					var now = (new Date()).getTime();
+					var rate = (now - start)/t;
+					rate = Math.min(rate,1);
+					drawHeart(rate*scale);
+					console.log('heart move');
+					if(rate == 1){
+						clearInterval(timer);
+						cb && cb();
+					}
+				},16);
+			}
+			function drawHeart(rate){
+				ctx.beginPath();
+				ctx.fillStyle = 'red';
+				ctx.moveTo(X,Y);
+				for(var i=0;i<360;i++){
+					var angle = i*Math.PI/180,
+					x = getX(rate,angle),
+					y = getY(rate,angle);
+					ctx.lineTo(x,y);
+				}
+				ctx.fill();
+			}
+			function getX(r,t) {//由弧度得到 X 坐标  
+	            return X + r * (16 * Math.pow(Math.sin(t), 3));  
+	        }
+	        function getY(r,t) {//由弧度得到 Y 坐标  
+	            return Y - r * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));  
+	        }
+	        function drawStar(rate){
+	        	for(var i=0;i<6;i++){
+	        		ctx.beginPath();
+	        		var x = X+Math.cos(i*Math.PI/3)*(66+60*rate);
+	        		var y = Y+Math.sin(i*Math.PI/3)*(66+60*rate);
+	        		ctx.fillStyle = '#fff';
+	        		ctx.arc(x,y,4*(1-rate),0,2*Math.PI);
+	        		ctx.fill();
+	        	}
+	        }
+		}
+	</script>
+</head>
+<body>
+	<canvas height="480" width="640"></canvas>
+</body>
+</html>
